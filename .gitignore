@@ -1,3 +1,7 @@
+#Project ignores
+**/gphoto2_webui/node_modules
+#**/gphoto2_webui/static
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -1,0 +1,12 @@
+---
+
+- hosts:
+    - pi
+  gather_facts: false
+  become: true
+  user: pi
+  tasks:
+    - name: create virtualenv
+      shell: python3 -m venv /opt/gphoto-webui
+      tags:
+        - venv

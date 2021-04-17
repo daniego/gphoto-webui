@@ -1,0 +1,92 @@
+---
+
+- hosts:
+    - pi
+  gather_facts: false
+  become: true
+  user: pi
+  tasks:
+    - name: Install essentials
+      apt:
+        name:
+          - git
+          - make
+          - autoconf
+          - libltdl-dev
+          - libusb-dev
+          - libexif-dev
+          - libpopt-dev
+          - libxml2-dev
+          - libjpeg-dev
+          - libgd-dev
+          - gettext
+          - autopoint
+
+        state: present
+        update_cache: true
+
+    - name: Clone libgphoto2
+      git:
+        repo: https://github.com/gphoto/libgphoto2.git
+        dest: /usr/local/src/libgphoto2
+      tags:
+        - clone
+      # become: false
+
+    - name: Clone gphoto2
+      git:
+        repo: https://github.com/gphoto/gphoto2.git
+        dest: /usr/local/src/gphoto2
+      # become: false
+      tags:
+        - clone
+
+    - name: Compilie libgphoto2
+      shell: |
+        autoreconf --install --symlink
+        ./configure
+        make
+        make install
+      args:
+        chdir: /usr/local/src/libgphoto2
+      # become: false
+      tags:
+        - compile_libgphoto
+
+    - name: Compilie gphoto2
+      shell: |
+        autoreconf --install --symlink
+        ./configure
+        make
+        make install
+      args:
+        chdir: /usr/local/src/gphoto2
+      # become: false
+      tags:
+        - compile_libgphoto
+
+    # - name:
+    #   line_in_file:
+    #     # sudo nano /etc/ld.so.conf.d/libc.conf
+    #     # Inside this file, you should find the following text, if it does not exist already then enter it.
+    #     # # libc default configuration
+    #     # /usr/local/lib
+    #     # sudo ldconfig
+    
+    - name: ldconfig
+      shell: ldconfig
+      tags:
+        - ldconfig
+
+    - name: Generate udev list and db
+      shell: "{{ item}}"
+      with_items:
+        - "/usr/local/lib/libgphoto2/print-camera-list udev-rules version 201 group plugdev mode 0660 | sudo tee /etc/udev/rules.d/90-libgphoto2.rules"
+        - "/usr/local/lib/libgphoto2/print-camera-list hwdb | sudo tee /etc/udev/hwdb.d/20-gphoto.hwdb"
+      tags:
+        - udev
+
+    - name: Test install
+      shell: gphoto2 --version
+      tags:
+        - test_install
